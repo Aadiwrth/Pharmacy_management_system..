@@ -22,3 +22,20 @@ and so when getchar is ran and the buffer contain let's say 'a' it will comapare
 - Make sure the ID is not redundancy
 - Making sure the search ID works
 - tmr goal is to implement delete as well asupdate and give a nice little touch on sell functions.
+
+
+Some problem i was facing just so i could recall 
+```
+Original main()
+    |
+    -> login()
+           |
+           -> main()   <-- second main call
+                  |
+                  -> choice 7
+                  -> return
+           |
+          -> continues executing login()
+```
+so that's why we are using return after main(); in login
+

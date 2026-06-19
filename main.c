@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 //Initializing state variable
-int state = 1,check = 0; 
+int state = 0,check = 0; 
 char temp[50];
 int main();
 void clearscreen(){
-    printf("\033[2J\033[H"); // "\033 or \x18 is suppose to represent ESC character and 2 selects all the character in the terminal then J erases the screen and another part \033 or \x18 is again represent ESC character and [H represent HOME destination/positon so it moves the cursor to row and colum 1 also the ESC start's the ANSI command "[" is the control sequence introducer(CSI)  "
+    //printf("\033[2J\033[H"); // "\033 or \x18 is suppose to represent ESC character and 2 selects all the character in the terminal then J erases the screen and another part \033 or \x18 is again represent ESC character and [H represent HOME destination/positon so it moves the cursor to row and colum 1 also the ESC start's the ANSI command "[" is the control sequence introducer(CSI)  "
+    printf("TEST");
 }
 
 struct Medicine {
@@ -18,32 +19,40 @@ struct Medicine {
 
 };
 void login(){
-    FILE *pass = fopen("Cred.txt","r+");
-    char temp[100],temp_file_pass[100];
+    FILE *pass = fopen("Cred.bin","rb+");
+    char temp_pass[100],temp_file_pass[100];
+    if(pass == NULL)
+    {
+        pass = fopen("Cred.bin", "wb");
+    }
+
     if(fgets(temp_file_pass,sizeof(temp_file_pass),pass) == NULL){
             printf("=============================\n");
             printf("Register System\n");
             printf("=============================\n");
             printf("Enter Your New Password: ");
             fgets(temp_file_pass,sizeof(temp_file_pass),stdin);
-            fprintf(pass, "%s",temp_file_pass);
+            fwrite(temp_file_pass,sizeof(char),sizeof(temp_file_pass),pass);
             fclose(pass);
-            login();
+            main();
+            return;
     }else {
     printf("=============================\n");
     printf("Login System\n");
     printf("=============================\n");
     printf("Enter your Password: ");
-    fgets(temp,sizeof(temp),stdin);
+    fgets(temp_pass,sizeof(temp_pass),stdin);
     }
-    if(strcmp(temp_file_pass,temp) == 0){
+    if(strcmp(temp_file_pass,temp_pass) == 0){
             state = 1;
             clearscreen();
+            fclose(pass);
             main();
+            return;
     }else {
             printf("Invalid password\n");
             printf("Press Enter to Continue");
-            gets(temp);
+            getchar();
             clearscreen();
             login();
             fclose(pass);
@@ -392,32 +401,32 @@ int main() {
 
         switch (choice) {
         case 1:
-           clearscreen();
-          create();
-          break;
+            clearscreen();
+            create();
+            break;
         case 2:
-          clearscreen();
-          view();
-          break;
+            clearscreen();
+            view();
+            break;
         case 3:
-          clearscreen();
-          search();
-          break;
+            clearscreen();
+            search();
+            break;
         case 4:
-          clearscreen();
-          sell();
-          break;
+            clearscreen();
+            sell();
+            break;
         case 5:
-          clearscreen();
-          update(); 
-          break;
+            clearscreen();
+            update(); 
+            break;
         case 6:
-          clearscreen();
-        delete();
-        break;
+            clearscreen();
+            delete();
+            break;
         case 7:
-          quit();
-          break;
+            quit();
+            break;
         default:
           printf("Invalid Input please try again\n");
           main();
