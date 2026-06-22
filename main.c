@@ -1,13 +1,25 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
 //Initializing state variable
 int state = 0,check = 0; 
 char temp[50];
+
 int main();
-void clearscreen(){
-    //printf("\033[2J\033[H"); // "\033 or \x18 is suppose to represent ESC character and 2 selects all the character in the terminal then J erases the screen and another part \033 or \x18 is again represent ESC character and [H represent HOME destination/positon so it moves the cursor to row and colum 1 also the ESC start's the ANSI command "[" is the control sequence introducer(CSI)  "
-    printf("TEST");
+
+void clearscreen() {
+#ifdef _WIN32 //* this is basically a preprocessor for if statement kinda like that and the compiler automatically defines _WIN32 when compiling on window cause window uses "cls" and linux/mac uses "clear" 
+    system("cls"); //* system is basically a 
+#else
+    system("clear");
+#endif
 }
+
+//! Previously used ANSI Code but now switching to the default system layout hehe
+// void clearscreen(){
+//     printf("\033[2J\033[H"); // "\033 or \x18 is suppose to represent ESC character and 2 selects all the character in the terminal then J erases the screen and another part \033 or \x18 is again represent ESC character and [H represent HOME destination/positon so it moves the cursor to row and colum 1 also the ESC start's the ANSI command "[" is the control sequence introducer(CSI)  "
+// }
 
 struct Medicine {
     int id;
@@ -20,42 +32,41 @@ struct Medicine {
 };
 void login(){
     FILE *pass = fopen("Cred.bin","rb+");
-    char temp_pass[100],temp_file_pass[100];
+    char temp_pass[100],temp_file_pass[100],stored_pass[100];
     if(pass == NULL)
     {
-        pass = fopen("Cred.bin", "wb");
-    }
-
-    if(fgets(temp_file_pass,sizeof(temp_file_pass),pass) == NULL){
-            printf("=============================\n");
-            printf("Register System\n");
-            printf("=============================\n");
-            printf("Enter Your New Password: ");
-            fgets(temp_file_pass,sizeof(temp_file_pass),stdin);
-            fwrite(temp_file_pass,sizeof(char),sizeof(temp_file_pass),pass);
-            fclose(pass);
-            main();
-            return;
+        pass = fopen("Cred.bin","wb");
+        printf("=============================\n");
+        printf("Register System\n");
+        printf("=============================\n");
+        printf("Enter Your New Password: ");
+        fgets(temp_file_pass,sizeof(temp_file_pass),stdin);
+        fwrite(temp_file_pass,sizeof(temp_file_pass),1,pass);
+        fclose(pass);
+        return;
     }else {
-    printf("=============================\n");
-    printf("Login System\n");
-    printf("=============================\n");
-    printf("Enter your Password: ");
-    fgets(temp_pass,sizeof(temp_pass),stdin);
+        if (fread(stored_pass, sizeof(stored_pass), 1, pass) != 1){
+                printf("Password file corrupted!\n");
+                fclose(pass);
+                return;
+            }
+        fclose(pass);
+        printf("=============================\n");
+        printf("Login System\n");
+        printf("=============================\n");
+        printf("Enter your Password: ");
+        fgets(temp_pass,sizeof(temp_pass),stdin);
     }
-    if(strcmp(temp_file_pass,temp_pass) == 0){
+    if(strcmp(stored_pass,temp_pass) == 0){
             state = 1;
             clearscreen();
-            fclose(pass);
-            main();
             return;
     }else {
             printf("Invalid password\n");
             printf("Press Enter to Continue");
             getchar();
             clearscreen();
-            login();
-            fclose(pass);
+            return;
    }
 }
 
@@ -117,7 +128,7 @@ void create() {
     while (state == 5) {
         printf("Enter Expire Date(M/Y): ");
         if (scanf("%d/%d", &med.expireMonth, &med.expireYear) != 2) {
-            printf("Invalid Please enter a valid stock number.\n");
+            printf("Invalid Please enter a valid expire Date (ie: 5/2027).\n");
             while (getchar() != '\n');
         } else {
             if (med.expireMonth < 1 || med.expireMonth > 12) {
@@ -135,7 +146,6 @@ void create() {
     }
 
     med.name[strcspn(med.name, "\n")] = '\0';
-
     fprintf(Pill, "%d|%s|%.2f|%d|%d/%d\n",
             med.id,
             med.name,
@@ -145,23 +155,22 @@ void create() {
             med.expireYear);
 
     clearscreen();
-
     printf("===YOUR INPUT DETAILS===\n");
     printf("Id: %d\n", med.id);
     printf("Medicine Name: %s\n", med.name);
     printf("Price: %.2f\n", med.price);
     printf("Stocks: %d\n", med.stock);
     printf("Expire Date: %d/%d\n\n", med.expireMonth, med.expireYear);
-
     printf("\nPress Enter to Continue\n");
-
     while (getchar() != '\n');
     fgets(temp, sizeof(temp), stdin);
 
     clearscreen();
     fclose(Pill);
-    main();
-}void view() {
+    return;
+}
+
+void view() {
     FILE *Pill = fopen("medicine.txt", "r");
     if (Pill == NULL) {
         printf("The File can't be opened!!!\n");
@@ -196,12 +205,12 @@ void create() {
         }
         printf("=================================\n");
     }
-    gets(temp);
+    while (getchar() != '\n');
     fclose(Pill);
     printf("Press Enter to Continue.");
-    gets(temp);
+    getchar();
     clearscreen();
-    main();
+    return;
 
 }// the strtok() function in C is basically a std function used to split a string into a smaller peice
 void search() {
@@ -241,10 +250,9 @@ void search() {
             token = strtok(NULL, "|");
             field++;
         }
-            gets(temp);
-            fclose(Pill);
+            while (getchar() != '\n');
             printf("Press Enter to Continue.");
-            gets(temp);
+            getchar();
             clearscreen();
             break;
         }else{
@@ -253,91 +261,233 @@ void search() {
         }
     }
     if(search_state == 1){
-        printf("The Id couldn;t be found!!\n");
+        printf("The Id couldn't be found!!\n");
     }
         fclose(Pill);
-        main();
+        return;
 }
-void sell(){}
+
+void sell(){
+    state = 1;
+    char bill_id[50];
+    int num_items;
+    
+#ifdef _WIN32
+    system("mkdir bills 2>nul");
+#else
+    system("mkdir bills 2>/dev/null");
+#endif
+
+    printf("=============================\n");
+    printf("Sell Medicine\n");
+    printf("=============================\n");
+    printf("Enter new Bill ID: ");
+    scanf("%s", bill_id);
+    
+    char filename[100];
+    sprintf(filename, "bills/%s.txt", bill_id);
+    FILE *bill_file = fopen(filename, "w");
+    if(bill_file == NULL){
+        printf("Failed to create bill file.\n");
+        return;
+    }
+    
+    printf("How many different medicines to sell :  ");
+    while(scanf("%d", &num_items) != 1 || num_items <= 0) {
+        printf("Invalid input. Enter a valid number: ");
+        while(getchar() != '\n');
+    }
+    
+    float total_amt = 0.0;
+    
+    fprintf(bill_file, "=================================\n");
+    fprintf(bill_file, "       PHARMACY BILL\n");
+    fprintf(bill_file, "Bill ID: %s\n", bill_id);
+    fprintf(bill_file, "=================================\n");
+    fprintf(bill_file, "%-10s %-20s %-10s %-10s %-10s\n", "ID", "Name", "Quantity", "Price", "Total");
+    fprintf(bill_file, "---------------------------------------------------------------\n");
+
+    for(int i = 0; i < num_items; i++) {
+        char search_id[256];
+        int qty;
+        printf("\n--- Item %d ---\n", i + 1);
+        printf("Enter Medicine ID: ");
+        scanf("%s", search_id);
+        printf("Quantity: ");
+        while(scanf("%d", &qty) != 1 || qty <= 0) {
+            printf("Invalid input. Quantity: ");
+            while(getchar() != '\n');
+        }
+        
+        FILE *Pill = fopen("medicine.txt", "r");
+        FILE *Temp = fopen("temp.txt", "w");
+        if(Pill == NULL || Temp == NULL){
+            printf("Database error. Cannot open medicine.txt\n");
+            if (Pill) fclose(Pill);
+            if (Temp) fclose(Temp);
+            break;
+        }
+        
+        char line[256], line_copy[256];
+        int found = 0;
+        
+        while(fgets(line, sizeof(line), Pill) != NULL){
+            strcpy(line_copy, line);
+            char *token = strtok(line, "|");
+            if(token != NULL && strcmp(token, search_id) == 0){
+                found = 1;
+                struct Medicine med;
+                med.id = atoi(token);
+                token = strtok(NULL, "|"); if(token) strcpy(med.name, token);
+                token = strtok(NULL, "|"); if(token) med.price = atof(token);
+                token = strtok(NULL, "|"); if(token) med.stock = atoi(token);
+                token = strtok(NULL, "/"); if(token) med.expireMonth = atoi(token);
+                token = strtok(NULL, "\n"); if(token) med.expireYear = atoi(token);
+                
+                if(med.stock >= qty) {
+                    int old_stock = med.stock;
+                    med.stock -= qty;
+                    float item_total = med.price * qty;
+                    total_amt += item_total;
+                    
+                    fprintf(Temp, "%d|%s|%.2f|%d|%d/%d\n", med.id, med.name, med.price, med.stock, med.expireMonth, med.expireYear);
+                    fprintf(bill_file, "%-10d %-20s %-10d %-10.2f %-10.2f\n", med.id, med.name, qty, med.price, item_total);
+                    
+                    printf("\n%d x Rs.%.2f = Rs.%.2f\n", qty, med.price, item_total);
+                    printf("Stock Before: %d\n", old_stock);
+                    printf("Stock After : %d\n", med.stock);
+                } else {
+                    printf("\nInsufficient stock! Available: %d\n", med.stock);
+                    fputs(line_copy, Temp);
+                }
+            } else {
+                fputs(line_copy, Temp);
+            }
+        }
+        fclose(Pill);
+        fclose(Temp);
+        
+        remove("medicine.txt");
+        rename("temp.txt", "medicine.txt");
+        
+        if(!found) {
+            printf("\nMedicine ID %s not found!\n", search_id);
+        }
+    }
+    
+    fprintf(bill_file, "---------------------------------------------------------------\n");
+    fprintf(bill_file, "TOTAL: Rs.%.2f\n", total_amt);
+    fprintf(bill_file, "=================================\n");
+    fclose(bill_file);
+    
+    printf("\n=================================\n");
+    printf("Sell process complete!\n");
+    printf("Total Bill: Rs.%.2f\n", total_amt);
+    printf("Bill saved to %s\n", filename);
+    printf("Press Enter to Continue...");
+    while(getchar() != '\n'); 
+    getchar(); 
+    clearscreen();
+}
+
 void update(){
     state = 10;
     struct Medicine med;
-    FILE *Pill = fopen("medicine.txt", "a+");
-    if(Pill == NULL){
+    FILE *Pill = fopen("medicine.txt", "r");
+    FILE *Temp = fopen("temp.txt", "w");
+    if(Pill == NULL || Temp == NULL){
         printf("The File can't be opened!!!\n");
+        if (Pill) fclose(Pill);
+        if (Temp) fclose(Temp);
         return;
     }
-    int search_state,choice;
+    int search_state = 1,choice;
     char search[256];
     char line[256];
+    char line_copy[256];
     printf("What Do you Want to Update: \n\n1.ID\n2.Medicine Name\n3.Medicine Price\n4.Medicine Stock\n5.Expire Date\n\n");
     while (state == 10) {
-    printf("Enter your Choice: ");
-    scanf("%d",&choice);
-    state = 1;
+        printf("Enter your Choice: ");
+        scanf("%d",&choice);
+        state = 1;
     }
     
     clearscreen();
     printf("Enter the ID: ");
     scanf("%s", search);
+    while (getchar() != '\n'); // Clear buffer for potential fgets
+
     while(fgets(line,sizeof(line),Pill) != NULL){
+        strcpy(line_copy, line);
         char *token = strtok(line,"|");
-        search_state = 0;
-        if(strcmp(token,search) == 0){
+        if(token != NULL && strcmp(token,search) == 0){
+            search_state = 0;
+            med.id = atoi(token);
+            token = strtok(NULL, "|"); if(token) strcpy(med.name, token);
+            token = strtok(NULL, "|"); if(token) med.price = atof(token);
+            token = strtok(NULL, "|"); if(token) med.stock = atoi(token);
+            token = strtok(NULL, "/"); if(token) med.expireMonth = atoi(token);
+            token = strtok(NULL, "\n"); if(token) med.expireYear = atoi(token);
+
             switch (choice) {
                 case 1:
-                    state = 1;
-                    while (state == 1) {
-                        printf("1. Enter ID number: ");
+                    while (1) {
+                        printf("1. Enter the new ID number: ");
                         if (scanf("%d", &med.id) != 1) {
                             printf("Invalid ID number!!\n");
                             while (getchar() != '\n');
                         } else {
                             while (getchar() != '\n');
+                            break;
                         }
                     }
+                    state = 1;
+                    break;
                 case 2:
-                    state = 2;
-                    while (state == 2) {
-                        printf("2. Enter Medicine Name: ");
+                    while (1) {
+                        printf("2. Enter the new Medicine Name: ");
                         fgets(med.name, sizeof(med.name), stdin);
 
                         if (strlen(med.name) > 2) {
-                            state = 3;
+                            med.name[strcspn(med.name, "\n")] = '\0';
+                            break;
                         } else {
                             printf("Invalid a name should contain minimum character of 2 letter\n");
                         }
                     }
+                    state = 1;
+                    break;
                 case 3:
-                    state = 3;
-                    while (state == 3) {
-                        printf("3. Enter your Medicine price: ");
+                    while (1) {
+                        printf("3. Enter the new Medicine price: ");
 
                         if (scanf("%f", &med.price) != 1 || med.price <= 0) {
                             printf("Invalid!!\n");
                             while (getchar() != '\n');
                         } else {
-                            state = 4;
+                            break;
                         }
                     }
+                    state = 1;
+                    break;
                 case 4:
-                    state = 4;
-                    while (state == 4) {
-                        printf("4. Enter Number of Stocks: ");
+                    while (1) {
+                        printf("4. Enter the new Number of Stocks: ");
 
                         if (scanf("%d", &med.stock) != 1 || med.stock <= 0) {
                             printf("Invalid Please enter a valid stock number.\n");
                             while (getchar() != '\n');
                         } else {
-                            state = 5;
+                            break;
                         }
                     }
+                    state = 1;
+                    break;
                 case 5:
-                    state = 5;
-                    while (state == 5) {
-                        printf("Enter Expire Date(M/Y): ");
+                    while (1) {
+                        printf("Enter the new Expire Date(M/Y): ");
                         if (scanf("%d/%d", &med.expireMonth, &med.expireYear) != 2) {
-                            printf("Invalid Please enter a valid stock number.\n");
+                            printf("Invalid Please enter a valid Expire Date.\n");
                             while (getchar() != '\n');
                         } else {
                             if (med.expireMonth < 1 || med.expireMonth > 12) {
@@ -348,96 +498,142 @@ void update(){
                                 printf("Invalid Year\n");
                                 continue;
                             } else {
-                                state = 1;
-                                continue;
+                                break;
                             }
                         }
                     }
+                    state = 1;
+                    break;
                 default:
                     printf("Invalid Choice Try again\n");
                     state = 10;
             }
-           
-                break;
+            fprintf(Temp, "%d|%s|%.2f|%d|%d/%d\n", med.id, med.name, med.price, med.stock, med.expireMonth, med.expireYear);
         }else{
-            search_state  = 1;
+            fputs(line_copy, Temp);
         }
-    }
-    if(search_state = 1){
-        printf("The Id couldn't be found!\n");
-    }
-    fclose(Pill);
-    main();
-
-}
-void delete(){}
-int quit() {
-  puts("Thank you for visiting our Dashboard <3");
-  return 0;
-}
-void menu(){
-
-}
-int main() {
-    if (state == 0){
-    login();
-    }else if(state == 1) {
-      int choice;
-      printf("=============================\n");
-      printf("Pharmacy Management\n");
-      printf("=============================\n");
-      printf("1. Add Medicine\n");
-      printf("2. View all available medicine\n");
-      printf("3. Search specific Medicine\n");
-      printf("4. Sell your Medicine\n");
-      printf("5. Update Medicine\n");
-      printf("6. Delete Medicine\n");
-      printf("7. Quit\n");
-      printf("Enter your choice: ");
-      if ((scanf("%d", &choice)) != 1) {
-        puts("\n\nInvalid Input \n\"Termination Session\"");
-
-      } else {
-
-        switch (choice) {
-        case 1:
-            clearscreen();
-            create();
-            break;
-        case 2:
-            clearscreen();
-            view();
-            break;
-        case 3:
-            clearscreen();
-            search();
-            break;
-        case 4:
-            clearscreen();
-            sell();
-            break;
-        case 5:
-            clearscreen();
-            update(); 
-            break;
-        case 6:
-            clearscreen();
-            delete();
-            break;
-        case 7:
-            quit();
-            break;
-        default:
-          printf("Invalid Input please try again\n");
-          main();
-        }
-      }
-      return 0;
-    }
-    else {
-      return 0;
     }
     
+    fclose(Pill);
+    fclose(Temp);
+
+    remove("medicine.txt");
+    rename("temp.txt", "medicine.txt");
+
+    if(search_state == 1){
+        printf("The Id couldn't be found!\n");
+    }else{
+        printf("Successfully updated!\n");
+    }
+    return;
+}
+void delete(){
+    state = 1; // Correctly return to main menu
+    FILE *Pill = fopen("medicine.txt", "r");
+    FILE *Temp = fopen("temp.txt", "w");
+    if(Pill == NULL || Temp == NULL){
+        printf("The File can't be opened!!!\n");
+        if (Pill){
+            fclose(Pill);  
+        } 
+        if (Temp) {
+            fclose(Temp);
+        }
+        return;
+    }
+    int search_state = 1;
+    char search[256];
+    char line[256];
+    char line_copy[256];
+    printf("Enter the ID: ");
+    scanf("%s", search);
+    while(fgets(line,sizeof(line),Pill) != NULL){
+        strcpy(line_copy, line);
+        char *token = strtok(line,"|");
+        if(token != NULL && strcmp(token,search) == 0){
+            search_state = 0; // Record found, don't write to temp file
+        }else{
+            fputs(line_copy, Temp);
+        }
+    }
+    
+    fclose(Pill);
+    fclose(Temp);
+
+    remove("medicine.txt");
+    rename("temp.txt", "medicine.txt");
+
+    if(search_state == 1){
+        printf("The Id couldn't be found!\n");
+    }else{
+        printf("Successfully deleted!\n");
+    }
+    return;
+}
+
+
+int main() {
+    while (1)
+    {
+        if (state == 0){
+            login();
+        }else if(state == 1) {
+            int choice;
+            printf("=============================\n");
+            printf("Pharmacy Management\n");
+            printf("=============================\n");
+            printf("1. Add Medicine\n");
+            printf("2. View all available medicine\n");
+            printf("3. Search specific Medicine\n");
+            printf("4. Sell your Medicine\n");
+            printf("5. Update Medicine\n");
+            printf("6. Delete Medicine\n");
+            printf("7. Quit\n");
+            printf("Enter your choice: ");
+            if ((scanf("%d", &choice)) != 1) {
+                puts("\n\nInvalid Input \n\"Termination Session\"");
+                continue;
+
+            } else {
+
+                switch (choice) {
+                case 1:
+                    clearscreen();
+                    create();
+                    break;
+                case 2:
+                    clearscreen();
+                    view();
+                    break;
+                case 3:
+                    clearscreen();
+                    search();
+                    break;
+                case 4:
+                    clearscreen();
+                    sell();
+                    break;
+                case 5:
+                    clearscreen();
+                    update(); 
+                    break;
+                case 6:
+                    clearscreen();
+                    delete();
+                    break;
+                case 7:
+                    puts("Thanks for visiting our Dashboard <3!!");
+                    return 0;
+                default:
+                printf("Invalid Input please try again\n");
+                break;
+                }
+            }
+        }
+        else {
+        return 0;
+        }
+        }    
 }
 
 

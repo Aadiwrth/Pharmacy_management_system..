@@ -1,3 +1,11 @@
 project
 *.exe
 *.bin
+ignore/
+code_analysis.md
+*.dat
+ai.c
+app
+bills/
+*.txt
+Analysis.md
