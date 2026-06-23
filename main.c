@@ -2,25 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//Initializing state variable
-int state = 0,check = 0; 
-char temp[50];
-
-int main();
-
-void clearscreen() {
-#ifdef _WIN32 //* this is basically a preprocessor for if statement kinda like that and the compiler automatically defines _WIN32 when compiling on window cause window uses "cls" and linux/mac uses "clear" 
-    system("cls"); //* system is basically a 
-#else
-    system("clear");
-#endif
-}
-
-//! Previously used ANSI Code but now switching to the default system layout hehe
-// void clearscreen(){
-//     printf("\033[2J\033[H"); // "\033 or \x18 is suppose to represent ESC character and 2 selects all the character in the terminal then J erases the screen and another part \033 or \x18 is again represent ESC character and [H represent HOME destination/positon so it moves the cursor to row and colum 1 also the ESC start's the ANSI command "[" is the control sequence introducer(CSI)  "
-// }
-
 struct Medicine {
     int id;
     char name[50];
@@ -30,6 +11,19 @@ struct Medicine {
     int expireYear;
 
 };
+
+int state = 0,check = 0; 
+char temp[50];
+int main();
+void clearscreen() {
+#ifdef _WIN32 //* this is basically a preprocessor for if statement kinda like that and the compiler automatically defines _WIN32 when compiling on window cause window uses "cls" and linux/mac uses "clear" 
+    system("cls"); //* system is basically a 
+#else
+    system("clear");
+#endif
+}
+
+
 void login(){
     FILE *pass = fopen("Cred.bin","rb+");
     char temp_pass[100],temp_file_pass[100],stored_pass[100];
@@ -70,7 +64,6 @@ void login(){
    }
 }
 
-// Function for the first option menu where you can Add medicine
 void create() {
     struct Medicine med;
     int temp_bal, temp_id;
@@ -92,7 +85,23 @@ void create() {
             while (getchar() != '\n');
         } else {
             while (getchar() != '\n');
-            state = 2;
+            int exists = 0;
+            rewind(Pill);
+            char line[256];
+            while (fgets(line, sizeof(line), Pill) != NULL) {
+                char line_copy[256];
+                strcpy(line_copy, line);
+                char *token = strtok(line_copy, "|");
+                if (token != NULL && atoi(token) == med.id) {
+                    exists = 1;
+                    break;
+                }
+            }
+            if (exists) {
+                printf("ID %d already exists! Please choose a different Id.\n", med.id);
+            } else {
+                state = 2;
+            }
         }
     }
     while (state == 2) {
@@ -158,7 +167,7 @@ void create() {
     printf("===YOUR INPUT DETAILS===\n");
     printf("Id: %d\n", med.id);
     printf("Medicine Name: %s\n", med.name);
-    printf("Price: %.2f\n", med.price);
+    printf("Price: Rs. %.2f\n", med.price);
     printf("Stocks: %d\n", med.stock);
     printf("Expire Date: %d/%d\n\n", med.expireMonth, med.expireYear);
     printf("\nPress Enter to Continue\n");
@@ -177,34 +186,32 @@ void view() {
         return;
     }
     char line[256];
+    int has_records = 0;
 
-    printf("======= Your Medicine Details =======\n");
+    printf("=================================================================================\n");
+    printf("%-10s | %-20s | %-10s | %-15s | %-15s\n", "ID", "Name", "Price", "Stock Left", "Expire Date");
+    printf("---------------------------------------------------------------------------------\n");
+
     while (fgets(line, sizeof(line), Pill) != NULL) {
-        int field = 0;
-        char *token = strtok(line, "|");
-        while (token != NULL) {
-            switch (field) {
-                case 0:
-                    printf("ID: %s\n", token);
-                    break;
-                case 1:
-                    printf("Name: %s\n", token);
-                    break;
-                case 2:
-                    printf("Price: %s\n", token);
-                    break;
-                case 3:
-                    printf("Stock Left: %s\n", token);
-                    break;
-                case 4:
-                    printf("Expire Date: %s\n", token);
-                    break;
-            }
-            token = strtok(NULL, "|");
-            field++;
+        has_records = 1;
+        line[strcspn(line, "\n")] = 0; // Remove newline character
+        
+        char *id = strtok(line, "|");
+        char *name = strtok(NULL, "|");
+        char *price = strtok(NULL, "|");
+        char *stock = strtok(NULL, "|");
+        char *expire = strtok(NULL, "|");
+
+        if (id && name && price && stock && expire) {
+            printf("%-10s | %-20s | %-10s | %-15s | %-15s\n", id, name, price, stock, expire);
         }
-        printf("=================================\n");
     }
+    
+    if (!has_records) {
+        printf("                              Empty! No medicines available.                     \n");
+    }
+    printf("=================================================================================\n");
+    
     while (getchar() != '\n');
     fclose(Pill);
     printf("Press Enter to Continue.");
@@ -219,52 +226,47 @@ void search() {
          printf("The File can't be opened!!!\n");
          return;
     }
-    int search_state;
+    int search_state = 1;
     char search[256];
     char line[256];
     printf("Enter the ID: ");
-    scanf("%s",search);
-    while(fgets(line,sizeof(line),Pill) != NULL){
-        char *token = strtok(line,"|");
-        search_state = 0;
-        int field = 0;
-        if(strcmp(token,search) == 0){
-            while (token != NULL) {
-            switch (field) {
-                case 0:
-                    printf("ID: %s\n", token);
-                    break;
-                case 1:
-                    printf("Name: %s\n", token);
-                    break;
-                case 2:
-                    printf("Price: %s\n", token);
-                    break;
-                case 3:
-                    printf("Stock Left: %s\n", token);
-                    break;
-                case 4:
-                    printf("Expire Date: %s\n", token);
-                    break;
-            }
-            token = strtok(NULL, "|");
-            field++;
-        }
-            while (getchar() != '\n');
-            printf("Press Enter to Continue.");
-            getchar();
-            clearscreen();
-            break;
-        }else{
-            search_state = 1;
+    scanf("%255s", search);
+    while (getchar() != '\n'); // THis part is used to Clear buffer
+    
+    printf("\n=================================================================================\n");
+    printf("%-10s | %-20s | %-10s | %-15s | %-15s\n", "ID", "Name", "Price", "Stock Left", "Expire Date");
+    printf("---------------------------------------------------------------------------------\n");
 
+    while(fgets(line,sizeof(line),Pill) != NULL){
+        line[strcspn(line, "\n")] = 0; 
+        char line_copy[256];
+        strcpy(line_copy, line);
+        
+        char *id = strtok(line_copy, "|");
+        if(id != NULL && strcmp(id,search) == 0){
+            search_state = 0;
+            char *name = strtok(NULL, "|");
+            char *price = strtok(NULL, "|");
+            char *stock = strtok(NULL, "|");
+            char *expire = strtok(NULL, "|");
+
+            if (name && price && stock && expire) {
+                printf("%-10s | %-20s | %-10s | %-15s | %-15s\n", id, name, price, stock, expire);
+            }
+            break;
         }
     }
+    
     if(search_state == 1){
-        printf("The Id couldn't be found!!\n");
+        printf("                          The ID couldn't be found!!                             \n");
     }
-        fclose(Pill);
-        return;
+    printf("=================================================================================\n");
+
+    printf("Press Enter to Continue.");
+    getchar();
+    clearscreen();
+    fclose(Pill);
+    return;
 }
 
 void sell(){
@@ -406,16 +408,20 @@ void update(){
     char line[256];
     char line_copy[256];
     printf("What Do you Want to Update: \n\n1.ID\n2.Medicine Name\n3.Medicine Price\n4.Medicine Stock\n5.Expire Date\n\n");
-    while (state == 10) {
+    while (1) {
         printf("Enter your Choice: ");
-        scanf("%d",&choice);
-        state = 1;
+        if (scanf("%d", &choice) == 1 && choice >= 1 && choice <= 5) {
+            break;
+        }
+        printf("Invalid choice! Please enter a number between 1 and 5.\n");
+        while (getchar() != '\n');
     }
+    state = 1;
     
     clearscreen();
     printf("Enter the ID: ");
     scanf("%s", search);
-    while (getchar() != '\n'); // Clear buffer for potential fgets
+    while (getchar() != '\n'); 
 
     while(fgets(line,sizeof(line),Pill) != NULL){
         strcpy(line_copy, line);
@@ -502,11 +508,7 @@ void update(){
                             }
                         }
                     }
-                    state = 1;
                     break;
-                default:
-                    printf("Invalid Choice Try again\n");
-                    state = 10;
             }
             fprintf(Temp, "%d|%s|%.2f|%d|%d/%d\n", med.id, med.name, med.price, med.stock, med.expireMonth, med.expireYear);
         }else{
@@ -521,14 +523,18 @@ void update(){
     rename("temp.txt", "medicine.txt");
 
     if(search_state == 1){
-        printf("The Id couldn't be found!\n");
+        printf("\nThe Id couldn't be found!\n");
+        printf("Press Enter to Continue.\n");
+        getchar();
     }else{
-        printf("Successfully updated!\n");
+        printf("\nSuccessfully updated!\n");
+        printf("Press Enter to Continue.\n");
+        getchar();
     }
     return;
 }
 void delete(){
-    state = 1; // Correctly return to main menu
+    state = 1;
     FILE *Pill = fopen("medicine.txt", "r");
     FILE *Temp = fopen("temp.txt", "w");
     if(Pill == NULL || Temp == NULL){
@@ -546,12 +552,13 @@ void delete(){
     char line[256];
     char line_copy[256];
     printf("Enter the ID: ");
-    scanf("%s", search);
+    scanf("%255s", search);
+    while (getchar() != '\n'); 
     while(fgets(line,sizeof(line),Pill) != NULL){
         strcpy(line_copy, line);
         char *token = strtok(line,"|");
         if(token != NULL && strcmp(token,search) == 0){
-            search_state = 0; // Record found, don't write to temp file
+            search_state = 0; 
         }else{
             fputs(line_copy, Temp);
         }
@@ -564,9 +571,13 @@ void delete(){
     rename("temp.txt", "medicine.txt");
 
     if(search_state == 1){
-        printf("The Id couldn't be found!\n");
+        printf("\nThe Id couldn't be found!\n");
+        printf("Press Enter to Continue.\n");
+        getchar();
     }else{
-        printf("Successfully deleted!\n");
+        printf("\nSuccessfully deleted!\n");
+        printf("Press Enter to Continue.\n");
+        getchar();
     }
     return;
 }
