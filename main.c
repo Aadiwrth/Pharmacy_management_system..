@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include <conio.h>
 
 struct Medicine {
@@ -80,8 +79,8 @@ void login(){
             return;
     }else {
             printf("Invalid password\n");
-            printf("Press Enter to Continue");
-            getchar();
+            printf("Press Any key to Continue");
+            getch();
             clearscreen();
             return;
    }
@@ -187,9 +186,9 @@ void create() {
     printf("Price: Rs. %.2f\n", med.price);
     printf("Stocks: %d\n", med.stock);
     printf("Expire Date: %d/%d\n\n", med.expireMonth, med.expireYear);
-    printf("\nPress Enter to Continue\n");
+    printf("\nPress Any Key to Continue\n");
     while (getchar() != '\n');
-    fgets(temp, sizeof(temp), stdin);
+    getch();
     clearscreen();
     fclose(Pill);
     return;
@@ -230,8 +229,8 @@ void view() {
     
     while (getchar() != '\n');
     fclose(Pill);
-    printf("Press Enter to Continue.");
-    getchar();
+    printf("Press Any key to Continue.");
+    getch();
     clearscreen();
     return;
 
@@ -278,8 +277,8 @@ void search() {
     }
     printf("=================================================================================\n");
 
-    printf("Press Enter to Continue.");
-    getchar();
+    printf("Press Any key to Continue.");
+    getch();
     clearscreen();
     fclose(Pill);
     return;
@@ -370,10 +369,8 @@ void sell(){
                     
                     fprintf(Temp, "%d|%s|%.2f|%d|%d/%d\n", med.id, med.name, med.price, med.stock, med.expireMonth, med.expireYear);
                     fprintf(bill_file, "%-10d %-20s %-10d %-10.2f %-10.2f\n", med.id, med.name, qty, med.price, item_total);
-                    
-                    printf("\n%d x Rs.%.2f = Rs.%.2f\n", qty, med.price, item_total);
-                    printf("Stock Before: %d\n", old_stock);
-                    printf("Stock After : %d\n", med.stock);
+        
+
                 } else {
                     printf("\nInsufficient stock! Available: %d\n", med.stock);
                     fputs(line_copy, Temp);
@@ -402,9 +399,9 @@ void sell(){
     printf("Sell process complete!\n");
     printf("Total Bill: Rs.%.2f\n", total_amt);
     printf("Bill saved to %s\n", filename);
-    printf("Press Enter to Continue...");
+    printf("Press Any key to Continue...");
     while(getchar() != '\n'); 
-    getchar(); 
+    getch(); 
     clearscreen();
 }
 
@@ -540,12 +537,12 @@ void update(){
 
     if(search_state == 1){
         printf("\nThe Id couldn't be found!\n");
-        printf("Press Enter to Continue.\n");
-        getchar();
+        printf("Press Any Key to Continue.\n");
+        getch();
     }else{
         printf("\nSuccessfully updated!\n");
-        printf("Press Enter to Continue.\n");
-        getchar();
+        printf("Press Any Key to Continue.\n");
+        getch();
     }
     return;
 }
@@ -588,12 +585,12 @@ void delete(){
 
     if(search_state == 1){
         printf("\nThe Id couldn't be found!\n");
-        printf("Press Enter to Continue.\n");
-        getchar();
+        printf("Press Any key to Continue.\n");
+        getch();
     }else{
         printf("\nSuccessfully deleted!\n");
-        printf("Press Enter to Continue.\n");
-        getchar();
+        printf("Press Any key to Continue.\n");
+        getch();
     }
     return;
 }
