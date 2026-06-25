@@ -2,11 +2,12 @@ project
 *.exe
 *.bin
 ignore/
-documentation/
+dcoumentation/
 *.dat
 ai.c
 app
 bills/
 *.txt
 Analysis.md
+PROGRESS.md
 code_analysis.md
