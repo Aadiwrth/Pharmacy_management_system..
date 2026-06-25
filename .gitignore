@@ -2,7 +2,7 @@ project
 *.exe
 *.bin
 ignore/
-
+documentation/
 *.dat
 ai.c
 app

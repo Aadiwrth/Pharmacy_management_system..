@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <conio.h>
+
 struct Medicine {
     int id;
     char name[50];
@@ -15,6 +17,27 @@ struct Medicine {
 int state = 0,check = 0; 
 char temp[50];
 int main();
+void inputPassword(char *pass, int max_length) {
+    int i = 0;
+    char ch;
+    while (1) {
+        ch = getch();
+        if (ch == '\r' || ch == '\n') {
+            pass[i] = '\0';
+            printf("\n");
+            break;
+        } else if (ch == '\b' || ch == 127) {
+            if (i > 0) {
+                i--;
+                printf("\b \b");
+            }
+        } else if (i < max_length - 1) {
+            pass[i++] = ch;
+            printf("*");
+        }
+    }
+}
+
 void clearscreen() {
 #ifdef _WIN32 //* this is basically a preprocessor for if statement kinda like that and the compiler automatically defines _WIN32 when compiling on window cause window uses "cls" and linux/mac uses "clear" 
     system("cls"); //* system is basically a 
@@ -34,13 +57,13 @@ void login(){
         printf("Register System\n");
         printf("=============================\n");
         printf("Enter Your New Password: ");
-        fgets(temp_file_pass,sizeof(temp_file_pass),stdin);
+        inputPassword(temp_file_pass, sizeof(temp_file_pass));
         fwrite(temp_file_pass,sizeof(temp_file_pass),1,pass);
         fclose(pass);
         return;
     }else {
         if (fread(stored_pass, sizeof(stored_pass), 1, pass) != 1){
-                printf("Password file corrupted!\n");
+                printf("Password  is empty!\n");
                 fclose(pass);
                 return;
             }
@@ -49,7 +72,7 @@ void login(){
         printf("Login System\n");
         printf("=============================\n");
         printf("Enter your Password: ");
-        fgets(temp_pass,sizeof(temp_pass),stdin);
+        inputPassword(temp_pass, sizeof(temp_pass));
     }
     if(strcmp(stored_pass,temp_pass) == 0){
             state = 1;
@@ -155,13 +178,7 @@ void create() {
     }
 
     med.name[strcspn(med.name, "\n")] = '\0';
-    fprintf(Pill, "%d|%s|%.2f|%d|%d/%d\n",
-            med.id,
-            med.name,
-            med.price,
-            med.stock,
-            med.expireMonth,
-            med.expireYear);
+    fprintf(Pill, "%d|%s|%.2f|%d|%d/%d\n", med.id, med.name, med.price, med.stock, med.expireMonth, med.expireYear);
 
     clearscreen();
     printf("===YOUR INPUT DETAILS===\n");
@@ -173,7 +190,6 @@ void create() {
     printf("\nPress Enter to Continue\n");
     while (getchar() != '\n');
     fgets(temp, sizeof(temp), stdin);
-
     clearscreen();
     fclose(Pill);
     return;

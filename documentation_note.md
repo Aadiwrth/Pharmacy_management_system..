@@ -17,6 +17,12 @@ This document provides a comprehensive, step-by-step tutorial of the `main.c` fi
     *   `stdlib.h`: Standard Library. Required for `system()` calls, and conversions like `atoi` (string to integer) and `atof` (string to float).
 
 ```c
+#include <conio.h>
+```
+*   **What is it?** We include `<conio.h>` to use the `getch()` function.
+*   **Why did we use it?** `getch()` reads a keypress instantly without displaying it on the screen, which is required for our `*****` password masking.
+
+```c
 #ifdef _WIN32
     system("cls");
 #else
@@ -96,6 +102,24 @@ struct Medicine {
     6.  `remove("medicine.txt")` deletes the old database.
     7.  `rename("temp.txt", "medicine.txt")` promotes the temp file to be the new official database.
 
+### G. Password Masking Logic (`inputPassword()`)
+When explaining how you convert passwords to `*` to your professor, you can break it down line-by-line:
+*   `ch = getch();`: This reads the key you pressed instantly, **without** echoing (showing) it on the screen.
+*   `if (ch == '\r' || ch == '\n')`: `\r` stands for **Carriage Return** (the Enter key in Windows) and `\n` stands for **Newline**. If the user presses Enter, we cap the string with `\0` (the null terminator) to finish the password string, print a newline, and `break` the loop.
+*   `else if (ch == '\b' || ch == 127)`: `\b` is the **Backspace** character. If the user presses Backspace and the length `i` is greater than 0:
+    *   `i--;`: We reduce the password array index so the next typed character will overwrite the deleted one in memory.
+    *   `printf("\b \b");`: This is a clever visual trick on the terminal! We move the cursor back one space (`\b`), print a blank space (` `) to visually erase the star on the screen, and then move the cursor back one space again (`\b`) so it's ready for the next letter.
+*   `pass[i++] = ch;`: If it's a normal character, we store the actual typed character inside the `pass` array.
+*   `printf("*");`: Right after storing the real character in memory, we manually print a `*` to the screen. The computer knows the real password, but the user only sees stars!
+
+### H. Table Formatting (`%-10s`, `%-20s`)
+In `view()`, `search()`, and `sell()`, you use formatting strings like: 
+`printf("%-10s | %-20s | %-10s", "ID", "Name", "Price");`
+Here is exactly how to explain this logic:
+*   **`%s`**: Tells C to expect and print a String.
+*   **`10` or `20` (Width Specifier)**: This reserves a fixed number of spaces for that specific column. For example, `20` means "reserve exactly 20 character spaces for the Medicine Name". If the name is "Panadol" (7 letters), C will automatically add 13 blank spaces after it. This guarantees that the next column (`|`) will perfectly align vertically for every single row.
+*   **`-` (Minus Sign / Left Justify)**: Without the minus sign, the text would be pushed to the far right side of those 20 spaces (right-aligned). The `-` forces the text to be **left-aligned**. It prints the text first on the left, and pads the remaining blank spaces on the right.
+
 ---
 
 ## 4. Confident Viva Answers for Your Teacher
@@ -114,3 +138,6 @@ struct Medicine {
 
 **Teacher:** *"What does `strcspn` do in your view function?"*
 **Your Answer:** "When `fgets` reads a line from a file, it keeps the newline character (`\n`) at the very end of the string. `strcspn(line, "\n")` searches the string and returns the index position of that newline. I then set that index to `\0` (the null terminator) to safely strip the newline away, which prevents my UI tables from breaking across multiple lines."
+
+**Teacher:** *"How does your password masking work?"*
+**Your Answer:** "It uses the `getch()` function from `<conio.h>` which reads a key instantly without displaying it on the screen. It then manually prints a `*` for every character typed."
